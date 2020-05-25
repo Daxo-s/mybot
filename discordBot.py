@@ -97,6 +97,9 @@ async def añadirpizza(contexto):
     
     for persona in contexto.message.mentions:
         idUsuario = persona.id
+        if idUsuario == 714300561465278525:
+            await contexto.send('🤨')
+            return
         
         if idUsuario not in dictPizzas:
             cantidad = 1
@@ -111,10 +114,13 @@ async def removerpizza(contexto):
     dictPizzas = archivos.leerPizzas()
 
     for persona in contexto.message.mentions:
-        idUsuario = persona.id
-
         mensaje = '{0} no debe 🍕!'
         cantidad = 0
+        
+        idUsuario = persona.id
+        if idUsuario == 714300561465278525:
+            mensaje = '🤨'
+
         if idUsuario not in dictPizzas:
             pass
         else:
@@ -125,7 +131,7 @@ async def removerpizza(contexto):
                 cantidad = dictPizzas[idUsuario] - 1
             archivos.escribirPizzas(idUsuario, cantidad)
         
-        await contexto.send(mensaje.format(persona.mention, cantidad))
+            await contexto.send(mensaje.format(persona.mention, cantidad))
 
 @cliente.command()
 async def buenardo(contexto):
