@@ -2,7 +2,8 @@ import os
 import json
 
 ruta = os.path.dirname(__file__)
-with open(ruta + '/config.json') as archivo:
+ruta = os.path.join(ruta, 'config.json')
+with open(ruta) as archivo:
     config = json.load(archivo)
 token = config['token']
 
@@ -42,6 +43,6 @@ async def añadirpizza(contexto):
         else:
             await contexto.send('{0} ahora debe {1} pizza.'.format(persona.mention, listaPizzas[persona]))
 
-cliente.run(token)
+#cliente.run(token)
 
 #EUDYPUTO
