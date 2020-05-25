@@ -57,10 +57,16 @@ class manejoArchivos():
                 VALUES({0}, {1})    
             '''.format(usuario, valor))
         else:
-            print('[DISC] Actualizando {0} en la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))   
-            cursor.execute('''
-                UPDATE PIZZAS SET VALOR={1} WHERE ID={0}
-            '''.format(usuario, valor))
+            if valor > 0:
+                print('[DISC] Actualizando {0} en la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))   
+                cursor.execute('''
+                    UPDATE PIZZAS SET VALOR={1} WHERE ID={0}
+                '''.format(usuario, valor))
+            else:
+                print('[DISC] Removiendo {0} de la tabla PIZZAS'.format(usuario, self.rutaPizzas))
+                cursor.execute('''
+                    DELETE FROM PIZZAS WHERE ID={0}
+                '''.format(usuario))
 
         conexion.commit()
         conexion.close()
@@ -99,6 +105,31 @@ async def añadirpizza(contexto):
         
         archivos.escribirPizzas(idUsuario, cantidad)
         await contexto.send('{0} ahora debe {1}🍕'.format(persona.mention, cantidad))
+
+@cliente.command()
+async def removerpizza(contexto):
+    dictPizzas = archivos.leerPizzas()
+
+    for persona in contexto.message.mentions:
+        idUsuario = persona.id
+
+        mensaje = '{0} no debe 🍕!'
+        cantidad = 0
+        if idUsuario not in dictPizzas:
+            pass
+        else:
+            if dictPizzas[idUsuario] == 0:
+                pass
+            else:
+                mensaje = '{0} ahora debe {1}🍕'
+                cantidad = dictPizzas[idUsuario] - 1
+            archivos.escribirPizzas(idUsuario, cantidad)
+        
+        await contexto.send(mensaje.format(persona.mention, cantidad))
+
+@cliente.command()
+async def buenardo(contexto):
+    await contexto.send('https://www.youtube.com/watch?v=3OGYzegOhF4')
 
 
 archivos = manejoArchivos()
