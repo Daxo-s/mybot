@@ -2,8 +2,8 @@ from os import path
 import json
 import sqlite3
 
-import discord
-from discord.ext import commands
+#import discord
+from discord.ext.commands import Bot
 
 class manejoArchivos():
     rutaRaiz = path.dirname(__file__)
@@ -65,47 +65,42 @@ class manejoArchivos():
         conexion.commit()
         conexion.close()
 
-archivos = manejoArchivos()
-cliente = commands.Bot(command_prefix='$')
+cliente = Bot(command_prefix='$')
 
 @cliente.event
 async def on_ready():
     print('[CLNT] Conectado exitosamente')
 
-
 @cliente.command()
 async def pizzas(contexto):
-    pizzas = sorted(list(archivos.leerPizzas().items()), key=lambda x: x[1], reverse=True)
+    dictPizzas = sorted(list(archivos.leerPizzas().items()), key=lambda x: x[1], reverse=True)
 
-    if len(pizzas) > 0:
-        for tupla in pizzas:
-            mensaje = '{0} debe {1} pizza'
-            if tupla[1] > 1:
-                mensaje += 's'
-            
+    if len(dictPizzas) > 0:
+        for tupla in dictPizzas:
             usuario = cliente.get_user(tupla[0])
             valor = tupla[1]
-            await contexto.send(mensaje.format(usuario.mention, valor))
+            await contexto.send('{0}: {1}🍕'.format(usuario.mention, valor))
+        totalPizzas = sum(map(lambda x: x[1], dictPizzas))
+        await contexto.send('{0}🧑, {1}🍕, {2}🍕per🧑'.format(len(dictPizzas), totalPizzas, round(totalPizzas/len(dictPizzas), 2)))
     else:
         await contexto.send('Nadie debe pizzas')
 
 @cliente.command()
 async def añadirpizza(contexto):
-    pizzas = archivos.leerPizzas()
+    dictPizzas = archivos.leerPizzas()
     
     for persona in contexto.message.mentions:
         idUsuario = persona.id
         
-        mensaje = '{0} ahora debe {1} pizza'
-        if idUsuario not in pizzas:
+        if idUsuario not in dictPizzas:
             cantidad = 1
         else:
-            cantidad = pizzas[idUsuario] + 1
-            mensaje += 's'
+            cantidad = dictPizzas[idUsuario] + 1
         
         archivos.escribirPizzas(idUsuario, cantidad)
-        await contexto.send(mensaje.format(persona.mention, cantidad))
+        await contexto.send('{0} ahora debe {1}🍕'.format(persona.mention, cantidad))
 
+
+archivos = manejoArchivos()
 token = archivos.leerToken()
 cliente.run(token)
-#Arrancar el bot.
