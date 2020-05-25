@@ -43,6 +43,6 @@ async def añadirpizza(contexto):
         else:
             await contexto.send('{0} ahora debe {1} pizza.'.format(persona.mention, listaPizzas[persona]))
 
-#cliente.run(token)
+cliente.run(token)
 
 #EUDYPUTO
