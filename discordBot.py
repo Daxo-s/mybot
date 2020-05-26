@@ -154,6 +154,7 @@ async def añadirpizza(contexto):
                 archivos.escribirPizzas(idUsuario, cantidad)
                 await contexto.send('{0} ahora debe {1}🍕'.format(destino.mention, cantidad))
             else:
+                await miMensaje.delete()
                 await contexto.send(content='Lo siento {0}, parece que esta vez no habrá pizza 😥'.format(contexto.author.mention))
 
 @cliente.command()
@@ -183,6 +184,10 @@ async def removerpizza(contexto):
 @cliente.command()
 async def buenardo(contexto):
     await contexto.send('https://www.youtube.com/watch?v=3OGYzegOhF4')
+
+@cliente.command()
+async def malardo(contexto):
+    await contexto.send('https://cdn.discordapp.com/attachments/436279597139755012/714958150939312168/malardo.png')
 
 
 archivos = ManejoArchivos()
