@@ -2,10 +2,10 @@ from os import path
 import json
 import sqlite3
 
-#import discord
+import discord
 from discord.ext.commands import Bot
 
-class manejoArchivos():
+class ManejoArchivos():
     rutaRaiz = path.dirname(__file__)
     rutaPizzas = path.join(rutaRaiz, 'pizzas.db')
     
@@ -71,25 +71,36 @@ class manejoArchivos():
         conexion.commit()
         conexion.close()
 
+
+idBot = 714300561465278525
 cliente = Bot(command_prefix='$')
 
 @cliente.event
 async def on_ready():
     print('[CLNT] Conectado exitosamente')
 
+@cliente.event
+async def on_reaction_add(reaccion, usuario):
+    if reaccion.message.author.id != idBot:
+        return
+    
+    print('[LOG ] {0} reaccionó a {1} con {2}'.format(usuario, reaccion.emoji, reaccion))
+
 @cliente.command()
 async def pizzas(contexto):
     dictPizzas = sorted(list(archivos.leerPizzas().items()), key=lambda x: x[1], reverse=True)
 
     if len(dictPizzas) > 0:
+        mensaje = ''
         for tupla in dictPizzas:
             usuario = cliente.get_user(tupla[0])
             valor = tupla[1]
-            await contexto.send('{0}: {1}🍕'.format(usuario.mention, valor))
+            mensaje += '{0}: {1}🍕\n'.format(usuario.mention, valor)
         totalPizzas = sum(map(lambda x: x[1], dictPizzas))
-        await contexto.send('{0}🧑, {1}🍕, {2}🍕per🧑'.format(len(dictPizzas), totalPizzas, round(totalPizzas/len(dictPizzas), 2)))
+        mensaje += '{0}🧑, {1}🍕, {2}🍕per🧑'.format(len(dictPizzas), totalPizzas, round(totalPizzas/len(dictPizzas), 2))
     else:
-        await contexto.send('Nadie debe pizzas')
+        mensaje = 'Nadie debe pizzas'
+    await contexto.send(mensaje)
 
 @cliente.command()
 async def añadirpizza(contexto):
@@ -97,7 +108,7 @@ async def añadirpizza(contexto):
     
     for persona in contexto.message.mentions:
         idUsuario = persona.id
-        if idUsuario == 714300561465278525:
+        if idUsuario == idBot:
             await contexto.send('🤨')
             return
         
@@ -109,6 +120,10 @@ async def añadirpizza(contexto):
         archivos.escribirPizzas(idUsuario, cantidad)
         await contexto.send('{0} ahora debe {1}🍕'.format(persona.mention, cantidad))
 
+        reaction, user= await cliente.wait_for('reaction_add', check=lambda reaction, user: reaction.emoji == '😎')
+        await user.send("😎 to you too!")
+        print(reaction.message.content)
+
 @cliente.command()
 async def removerpizza(contexto):
     dictPizzas = archivos.leerPizzas()
@@ -118,7 +133,7 @@ async def removerpizza(contexto):
         cantidad = 0
         
         idUsuario = persona.id
-        if idUsuario == 714300561465278525:
+        if idUsuario == idBot:
             mensaje = '🤨'
 
         if idUsuario not in dictPizzas:
@@ -138,6 +153,6 @@ async def buenardo(contexto):
     await contexto.send('https://www.youtube.com/watch?v=3OGYzegOhF4')
 
 
-archivos = manejoArchivos()
+archivos = ManejoArchivos()
 token = archivos.leerToken()
 cliente.run(token)
