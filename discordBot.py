@@ -38,11 +38,11 @@ class ManejoArchivos():
         
         dictPizzas = {}
         
-        try:
+        try:#CREATE TABLE IF NOT EXISTS PIZZAS
             cursor.execute('''
                 CREATE TABLE PIZZAS(
-                    ID INT PRIMARY KEY NOT NULL,
-                    VALOR INT NOT NULL
+                    ID     INT               PRIMARY KEY NOT NULL,
+                    VALOR  TINYINT UNSIGNED              NOT NULL
                 )
             ''')
             conexion.commit()
@@ -78,7 +78,7 @@ class ManejoArchivos():
                     UPDATE PIZZAS SET VALOR={1} WHERE ID={0}
                 '''.format(usuario, valor))
             else:
-                print('[DISC] Removiendo {0} de la tabla PIZZAS'.format(usuario, self.rutaPizzas))
+                print('[DISC] Removiendo {0} de la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))
                 cursor.execute('''
                     DELETE FROM PIZZAS WHERE ID={0}
                 '''.format(usuario))
@@ -149,12 +149,12 @@ async def añadirpizza(contexto):
             await miMensaje.delete()
             await contexto.send(content='Lo siento {0}, parece que esta vez no habrá pizza 😥'.format(contexto.author.mention))
 
-        if reaccion != None and reaccion.message.id == miMensaje.id and reaccion.emoji == opciones['si']:
-            archivos.escribirPizzas(idUsuario, cantidad)
-            await miMensaje.remove_reaction(opciones['si'])
-            await miMensaje.remove_reaction(opciones['no'])
-
-            await contexto.send('{0} ahora debe {1}🍕'.format(destino.mention, cantidad))
+        if reaccion != None:
+            if reaccion.message.id == miMensaje.id and reaccion.emoji == opciones['si']:
+                archivos.escribirPizzas(idUsuario, cantidad)
+                await contexto.send('{0} ahora debe {1}🍕'.format(destino.mention, cantidad))
+            else:
+                await contexto.send(content='Lo siento {0}, parece que esta vez no habrá pizza 😥'.format(contexto.author.mention))
 
 @cliente.command()
 async def removerpizza(contexto):
