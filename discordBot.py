@@ -19,6 +19,19 @@ class ManejoArchivos():
         token = config['token']
         return token
     
+    '''
+    def leerEmijiOpciones(self):
+        with open(path.join(self.rutaRaiz, 'config.json')) as archivo:
+            config = json.load(archivo)
+            archivo.close()
+        
+        opciones = {
+            'si': config['emojiSi'],
+            'no': config['emojiNo']
+        }
+        return opciones
+    '''
+    
     def leerPizzas(self):
         conexion = sqlite3.connect(self.rutaPizzas)
         cursor = conexion.cursor()
@@ -131,7 +144,7 @@ async def añadirpizza(contexto):
 
         reaccion = None
         try:
-            reaccion, emisor = await cliente.wait_for('reaction_add', check=lambda reaction, user: user == destino, timeout=1)#tiempoOpciones)
+            reaccion, emisor = await cliente.wait_for('reaction_add', check=lambda reaction, user: user == destino, timeout=tiempoOpciones)
         except asyncio.TimeoutError:
             await miMensaje.delete()
             await contexto.send(content='Lo siento {0}, parece que esta vez no habrá pizza 😥'.format(contexto.author.mention))
