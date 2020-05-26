@@ -2,6 +2,8 @@ from os import path
 import json
 import sqlite3
 
+import asyncio
+
 import discord
 from discord.ext.commands import Bot
 
@@ -73,18 +75,25 @@ class ManejoArchivos():
 
 
 idBot = 714300561465278525
+opciones = {
+    'si': '\N{REGIONAL INDICATOR SYMBOL LETTER S}',
+    'no': '\N{REGIONAL INDICATOR SYMBOL LETTER N}'
+}
+tiempoOpciones = 300
 cliente = Bot(command_prefix='$')
 
 @cliente.event
 async def on_ready():
     print('[CLNT] Conectado exitosamente')
 
+'''
 @cliente.event
 async def on_reaction_add(reaccion, usuario):
     if reaccion.message.author.id != idBot:
         return
     
-    print('[LOG ] {0} reaccionó a {1} con {2}'.format(usuario, reaccion.emoji, reaccion))
+    print('[LOG ] {0}'.format(reaccion.emoji.encode('ascii', 'namereplace')))
+'''
 
 @cliente.command()
 async def pizzas(contexto):
@@ -106,8 +115,8 @@ async def pizzas(contexto):
 async def añadirpizza(contexto):
     dictPizzas = archivos.leerPizzas()
     
-    for persona in contexto.message.mentions:
-        idUsuario = persona.id
+    for destino in contexto.message.mentions:
+        idUsuario = destino.id
         if idUsuario == idBot:
             await contexto.send('🤨')
             return
@@ -116,13 +125,23 @@ async def añadirpizza(contexto):
             cantidad = 1
         else:
             cantidad = dictPizzas[idUsuario] + 1
-        
-        archivos.escribirPizzas(idUsuario, cantidad)
-        await contexto.send('{0} ahora debe {1}🍕'.format(persona.mention, cantidad))
+        miMensaje = await contexto.send('{0}, ¿Confirmas?'.format(destino.mention))
+        await miMensaje.add_reaction(opciones['si']),
+        await miMensaje.add_reaction(opciones['no'])
 
-        reaction, user= await cliente.wait_for('reaction_add', check=lambda reaction, user: reaction.emoji == '😎')
-        await user.send("😎 to you too!")
-        print(reaction.message.content)
+        reaccion = None
+        try:
+            reaccion, emisor = await cliente.wait_for('reaction_add', check=lambda reaction, user: user == destino, timeout=1)#tiempoOpciones)
+        except asyncio.TimeoutError:
+            await miMensaje.delete()
+            await contexto.send(content='Lo siento {0}, parece que esta vez no habrá pizza 😥'.format(contexto.author.mention))
+
+        if reaccion != None and reaccion.message.id == miMensaje.id and reaccion.emoji == opciones['si']:
+            archivos.escribirPizzas(idUsuario, cantidad)
+            await miMensaje.remove_reaction(opciones['si'])
+            await miMensaje.remove_reaction(opciones['no'])
+
+            await contexto.send('{0} ahora debe {1}🍕'.format(destino.mention, cantidad))
 
 @cliente.command()
 async def removerpizza(contexto):
