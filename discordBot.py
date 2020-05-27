@@ -32,7 +32,7 @@ class ManejoArchivos():
         return opciones
     '''
     
-    def leerPizzas(self):
+    def leerPizzas(self, servidor):
         conexion = sqlite3.connect(self.rutaPizzas)
         cursor = conexion.cursor()
         
@@ -40,48 +40,48 @@ class ManejoArchivos():
         
         try:#CREATE TABLE IF NOT EXISTS PIZZAS
             cursor.execute('''
-                CREATE TABLE PIZZAS(
+                CREATE TABLE s{0}(
                     ID     INT               PRIMARY KEY NOT NULL,
                     VALOR  TINYINT UNSIGNED              NOT NULL
                 )
-            ''')
+            '''.format(servidor))
             conexion.commit()
-            print('[DISC] Tabla PIZZAS creada exitosamente')
+            print('[DISC] Tabla {0} creada exitosamente'.format(servidor))
         except:
-            print('[DISC] Leyendo {0}'.format(self.rutaPizzas))
+            print('[DISC] Leyendo la tabla {0} en {1}'.format(servidor, self.rutaPizzas))
             cursor.execute('''
-                SELECT ID, VALOR FROM PIZZAS
-            ''')
+                SELECT ID, VALOR FROM s{0}
+            '''.format(servidor))
             for pareja in cursor:
                 dictPizzas[pareja[0]] = pareja[1]
         
         conexion.close()
         return dictPizzas
     
-    def escribirPizzas(self, usuario, valor):
+    def escribirPizzas(self, servidor, usuario, valor):
         conexion = sqlite3.connect(self.rutaPizzas)
         cursor = conexion.cursor()
 
         celda = cursor.execute('''
-            SELECT 1 FROM PIZZAS WHERE ID={0}
-        '''.format(usuario)).fetchone()
+            SELECT 1 FROM s{1} WHERE ID={0}
+        '''.format(usuario, servidor)).fetchone()
         if celda == None:
-            print('[DISC] Añadiendo {0} a la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))
+            print('[DISC] Añadiendo {0} a la tabla {1} en {2}'.format(usuario, servidor, self.rutaPizzas))
             cursor.execute('''
-                INSERT INTO PIZZAS(ID, VALOR)
+                INSERT INTO s{2}(ID, VALOR)
                 VALUES({0}, {1})    
-            '''.format(usuario, valor))
+            '''.format(usuario, valor, servidor))
         else:
             if valor > 0:
-                print('[DISC] Actualizando {0} en la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))   
+                print('[DISC] Actualizando {0} en la tabla {1} en {2}'.format(usuario, servidor, self.rutaPizzas))   
                 cursor.execute('''
-                    UPDATE PIZZAS SET VALOR={1} WHERE ID={0}
-                '''.format(usuario, valor))
+                    UPDATE s{2} SET VALOR={1} WHERE ID={0}
+                '''.format(usuario, valor, servidor))
             else:
-                print('[DISC] Removiendo {0} de la tabla PIZZAS en {1}'.format(usuario, self.rutaPizzas))
+                print('[DISC] Removiendo {0} de la tabla {1} en {2}'.format(usuario, servidor, self.rutaPizzas))
                 cursor.execute('''
-                    DELETE FROM PIZZAS WHERE ID={0}
-                '''.format(usuario))
+                    DELETE FROM s{1} WHERE ID={0}
+                '''.format(usuario, servidor))
 
         conexion.commit()
         conexion.close()
@@ -110,7 +110,7 @@ async def on_reaction_add(reaccion, usuario):
 
 @cliente.command()
 async def pizzas(contexto):
-    dictPizzas = sorted(list(archivos.leerPizzas().items()), key=lambda x: x[1], reverse=True)
+    dictPizzas = sorted(list(archivos.leerPizzas(contexto.guild.id).items()), key=lambda x: x[1], reverse=True)
 
     if len(dictPizzas) > 0:
         mensaje = ''
@@ -126,7 +126,7 @@ async def pizzas(contexto):
 
 @cliente.command()
 async def añadirpizza(contexto):
-    dictPizzas = archivos.leerPizzas()
+    dictPizzas = archivos.leerPizzas(contexto.guild.id)
     
     for destino in contexto.message.mentions:
         idUsuario = destino.id
@@ -151,7 +151,7 @@ async def añadirpizza(contexto):
 
         if reaccion != None:
             if reaccion.message.id == miMensaje.id and reaccion.emoji == opciones['si']:
-                archivos.escribirPizzas(idUsuario, cantidad)
+                archivos.escribirPizzas(contexto.guild.id, idUsuario, cantidad)
                 await contexto.send('{0} ahora debe {1}🍕'.format(destino.mention, cantidad))
             else:
                 await miMensaje.delete()
@@ -159,7 +159,7 @@ async def añadirpizza(contexto):
 
 @cliente.command()
 async def removerpizza(contexto):
-    dictPizzas = archivos.leerPizzas()
+    dictPizzas = archivos.leerPizzas(contexto.guild.id)
 
     for persona in contexto.message.mentions:
         mensaje = '{0} no debe 🍕!'
@@ -177,7 +177,7 @@ async def removerpizza(contexto):
             else:
                 mensaje = '{0} ahora debe {1}🍕'
                 cantidad = dictPizzas[idUsuario] - 1
-            archivos.escribirPizzas(idUsuario, cantidad)
+            archivos.escribirPizzas(contexto.guild.id, idUsuario, cantidad)
         
             await contexto.send(mensaje.format(persona.mention, cantidad))
 
