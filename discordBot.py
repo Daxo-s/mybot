@@ -19,18 +19,16 @@ class ManejoArchivos():
         token = config['token']
         return token
     
-    '''
-    def leerEmijiOpciones(self):
+    def leerOpciones(self):
         with open(path.join(self.rutaRaiz, 'config.json')) as archivo:
             config = json.load(archivo)
             archivo.close()
         
         opciones = {
-            'si': config['emojiSi'],
-            'no': config['emojiNo']
+            'si': config['opciones']['si'],
+            'no': config['opciones']['no']
         }
         return opciones
-    '''
     
     def leerPizzas(self, servidor):
         conexion = sqlite3.connect(self.rutaPizzas)
@@ -86,13 +84,6 @@ class ManejoArchivos():
         conexion.commit()
         conexion.close()
 
-
-idBot = 714300561465278525
-opciones = {
-    'si': '\N{REGIONAL INDICATOR SYMBOL LETTER S}',
-    'no': '\N{REGIONAL INDICATOR SYMBOL LETTER N}'
-}
-tiempoOpciones = 300
 cliente = Bot(command_prefix='$')
 
 @cliente.event
@@ -102,7 +93,7 @@ async def on_ready():
 '''
 @cliente.event
 async def on_reaction_add(reaccion, usuario):
-    if reaccion.message.author.id != idBot:
+    if reaccion.message.author.id != cliente.user.id:
         return
     
     print('[LOG ] {0}'.format(reaccion.emoji.encode('ascii', 'namereplace')))
@@ -130,7 +121,7 @@ async def añadirpizza(contexto):
     
     for destino in contexto.message.mentions:
         idUsuario = destino.id
-        if idUsuario == idBot:
+        if idUsuario == cliente.user.id:
             await contexto.send('🤨')
             return
         
@@ -166,7 +157,7 @@ async def removerpizza(contexto):
         cantidad = 0
         
         idUsuario = persona.id
-        if idUsuario == idBot:
+        if idUsuario == cliente.user.id:
             mensaje = '🤨'
 
         if idUsuario not in dictPizzas:
@@ -189,7 +180,17 @@ async def buenardo(contexto):
 async def malardo(contexto):
     await contexto.send('https://cdn.discordapp.com/attachments/436279597139755012/714958150939312168/malardo.png')
 
+@cliente.command()
+async def raw(contexto):
+    mensajeOriginal = contexto.message
+    mensaje = ' '.join(mensajeOriginal.content.split(' ')[1:]).replace('*', '\*').replace('~', '\~')
+    
+    await contexto.send(mensaje)
 
 archivos = ManejoArchivos()
+#⏯⏭
+opciones = archivos.leerOpciones()
+tiempoOpciones = 300
+
 token = archivos.leerToken()
 cliente.run(token)

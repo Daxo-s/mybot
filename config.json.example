@@ -1,3 +1,7 @@
 {
-    "token":"-1"
+    "token":"-1",
+    "opciones":{
+        "si":"\u2b55",
+        "no":"\u274c"
+    }
 }
